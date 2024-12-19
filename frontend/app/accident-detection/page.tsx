@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Image from "next/image";
+import { AlertCircle, CheckCircle2, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
 interface DetectionResult {
   prediction: string;
@@ -17,6 +19,7 @@ interface DetectionResult {
 const placeholderImages: string[] = [
   "/accident_prediction/accident1.webp",
   "/accident_prediction/accident3.jpg",
+  "/accident_prediction/nonaccident1.jpg",
 ];
 
 export default function AccidentDetection() {
@@ -30,6 +33,8 @@ export default function AccidentDetection() {
 
   // Handle file change and set preview
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setResult(null);
+
     if (event.target.files?.[0]) {
       const file = event.target.files[0];
       setSelectedFile(file);
@@ -41,6 +46,7 @@ export default function AccidentDetection() {
 
   // Fetch the placeholder image as a Blob and convert it to a File
   const handlePlaceholderSelect = async (imageUrl: string) => {
+    setResult(null);
     setSelectedPlaceholder(imageUrl); // Store image URL instead of File
     setSelectedFile(null); // Reset selected file
 
@@ -76,7 +82,7 @@ export default function AccidentDetection() {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/predict/accident`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/accident/predict`,
         formData
       );
       setResult(response.data);
@@ -97,7 +103,15 @@ export default function AccidentDetection() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Accident Detection</h1>
+      <div className="flex gap-10">
+        <Link href={"/"}>
+          <Button className="" variant={"secondary"}>
+            <ChevronLeft />
+            Back Home
+          </Button>
+        </Link>
+        <h1 className="text-3xl font-bold mb-6">Accident Detection</h1>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Detect Accident from Image or Video</CardTitle>
@@ -183,9 +197,18 @@ export default function AccidentDetection() {
           {result && (
             <div className="mt-4">
               <h2 className="text-xl font-semibold">Detection Result:</h2>
-              <p>
-                <strong>Prediction:</strong> {result.prediction}
-              </p>
+
+              <div className="flex items-center">
+                {result.prediction === "Accident" ? (
+                  <AlertCircle className="mr-2 text-red-500" />
+                ) : (
+                  <CheckCircle2 className="mr-2 text-green-500" />
+                )}
+                <span className="text-lg font-medium">
+                  <strong>Prediction:</strong> {result.prediction}
+                </span>
+              </div>
+
               <div>
                 <strong>Probabilities:</strong>
                 <ul>

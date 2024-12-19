@@ -9,7 +9,7 @@ router = APIRouter()
 model = load_learner("Accident_Detection/model.pkl")
 
 
-@router.post("/predict/")
+@router.post("/predict")
 async def predict(file: UploadFile = File(...)):
     try:
         image_data = await file.read()
