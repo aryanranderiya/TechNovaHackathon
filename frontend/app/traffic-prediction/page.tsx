@@ -36,6 +36,11 @@ interface PredictionData {
   prediction: number;
 }
 
+export const stations: number[] = [
+  86090, 116210, 116610, 116770, 116820, 116830, 116840, 116850, 118240, 118250,
+  118260, 119030, 119100, 119120, 119740, 119780,
+];
+
 export default function TrafficPrediction() {
   const [predictions, setPredictions] = useState<PredictionData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -43,10 +48,6 @@ export default function TrafficPrediction() {
   const [stationId, setStationId] = useState<number>(86090); // Default station_id
 
   // List of station IDs
-  const stationIds: number[] = [
-    86090, 116210, 116610, 116770, 116820, 116830, 116840, 116850, 118240,
-    118250, 118260, 119030, 119100, 119120, 119740, 119780,
-  ];
 
   const handlePredict = async (): Promise<void> => {
     setLoading(true);
@@ -121,7 +122,7 @@ export default function TrafficPrediction() {
                 </SelectTrigger>
                 <SelectContent>
                   <div className="space-y-2">
-                    {stationIds.map((id) => (
+                    {stations.map((id) => (
                       <SelectItem key={id} value={id.toString()}>
                         Station {id}
                       </SelectItem>

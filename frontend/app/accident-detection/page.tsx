@@ -18,6 +18,7 @@ interface DetectionResult {
 
 const placeholderImages: string[] = [
   "/accident_prediction/accident1.webp",
+  "/accident_prediction/accident3.png",
   "/accident_prediction/accident3.jpg",
   "/accident_prediction/nonaccident1.jpg",
 ];
@@ -82,7 +83,7 @@ export default function AccidentDetection() {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/accident/predict`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/accident/predict/image`,
         formData
       );
       setResult(response.data);

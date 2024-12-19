@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from Traffic_Prediction.route import router as traffic_router
 from Accident_Detection.route import router as accident_router
 from Driver_Drowsiness.route import router as driver_router
+from RAG.route import router as RAG
 
 app = FastAPI()
 
@@ -20,6 +21,7 @@ app.add_middleware(
 app.include_router(traffic_router, prefix="/api/traffic", tags=["Traffic Prediction"])
 app.include_router(accident_router, prefix="/api/accident", tags=["Accident Detection"])
 app.include_router(driver_router, prefix="/api/drowsiness", tags=["Driver Drowsiness"])
+app.include_router(RAG, prefix="/api/RAG", tags=["LLM"])
 
 if __name__ == "__main__":
     import uvicorn

@@ -68,7 +68,7 @@ async def predict(
         except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid datetime format. Use 'YYYY-MM-DD HH:MM:SS'.",
+                detail="Invalid datetime format. Use 'YYYY-MM-DD HH:MM:SS'.",
             )
 
         # Extract relevant features
@@ -119,17 +119,20 @@ async def predict(
         # Extract predicted value
         predicted_value = prediction.item()
 
-        # # Unnormalize the predicted value
         # data_min = 0
         # data_max = 23
-
         # predicted_value = predicted_value * (data_max - data_min) + data_min
+
+        print(f"Features: {features}")
+        print(f"Raw Prediction: {prediction}")
+        print(f"Unnormalized Prediction: {predicted_value}")
 
         return JSONResponse(
             content={
                 "station_id": station_id,
                 "datetime": datetime,
-                "prediction": ceil(predicted_value),
+                # "prediction": ceil(predicted_value),
+                "prediction": predicted_value,
             }
         )
 
