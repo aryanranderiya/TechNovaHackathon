@@ -1,14 +1,15 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile
-from fastapi.responses import JSONResponse
-from fastai.vision.all import load_learner, PILImage
 import io
 
-app = FastAPI()
+from fastai.vision.all import PILImage, load_learner
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 
-model = load_learner("model.pkl")
+router = APIRouter()
+
+model = load_learner("Accident_Detection/model.pkl")
 
 
-@app.post("/predict/")
+@router.post("/predict/")
 async def predict(file: UploadFile = File(...)):
     try:
         image_data = await file.read()
@@ -24,9 +25,3 @@ async def predict(file: UploadFile = File(...)):
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error in prediction: {str(e)}")
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
