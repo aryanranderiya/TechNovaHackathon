@@ -9,6 +9,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronLeft,
+  ImageIcon,
   Loader2,
   Video,
 } from "lucide-react";
@@ -37,10 +38,7 @@ const placeholderImages: string[] = [
   "/accident_prediction/nonaccident1.jpg",
 ];
 
-const placeholderVideos: string[] = [
-  "/accident_prediction/video1.mp4",
-  "/accident_prediction/video2.mp4",
-];
+const placeholderVideos: string[] = ["/accident_prediction/accident.mp4"];
 
 export default function AccidentDetection() {
   // Image states
@@ -223,13 +221,13 @@ export default function AccidentDetection() {
 
       <div className="flex flex-col gap-6">
         {/* Image Detection Card */}
-        <Card>
+        <Card className="bg-zinc-100">
           <CardHeader>
-<CardTitle className="flex gap-3">
-              <Video />
-              Video Accident Detection
+            <CardTitle className="flex gap-3">
+              <ImageIcon />
+              Image Accident Detection
             </CardTitle>
-                      </CardHeader>
+          </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
@@ -259,7 +257,7 @@ export default function AccidentDetection() {
                   onValueChange={handleImagePlaceholderSelect}
                   value={selectedImagePlaceholder || ""}
                 >
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex gap-4">
                     {placeholderImages.map((imageUrl, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <RadioGroupItem
@@ -299,7 +297,7 @@ export default function AccidentDetection() {
               </Button>
 
               {imageResult && (
-                <div className="mt-4 p-4 border rounded-lg">
+                <div className="mt-4 p-4 border rounded-lg bg-white">
                   <h2 className="text-xl font-semibold mb-2">
                     Detection Result:
                   </h2>
@@ -313,6 +311,16 @@ export default function AccidentDetection() {
                       <strong>Prediction:</strong> {imageResult.prediction}
                     </span>
                   </div>
+
+                  <ul>
+                    {formatProbabilities(imageResult.probabilities).map(
+                      (prob, index) => (
+                        <li key={index}>
+                          {prob.label}: {prob.probability}%
+                        </li>
+                      )
+                    )}
+                  </ul>
                 </div>
               )}
             </div>
@@ -320,7 +328,7 @@ export default function AccidentDetection() {
         </Card>
 
         {/* Video Detection Card */}
-        <Card>
+        <Card className="bg-zinc-100">
           <CardHeader>
             <CardTitle className="flex gap-3">
               <Video />
@@ -390,7 +398,7 @@ export default function AccidentDetection() {
               </Button>
 
               {videoResult && (
-                <div className="mt-4 p-4 border rounded-lg">
+                <div className="mt-4 p-4 border rounded-lg bg-white">
                   <h2 className="text-xl font-semibold mb-2">
                     Detection Result:
                   </h2>
@@ -402,7 +410,7 @@ export default function AccidentDetection() {
                       <img
                         src={accidentFrameUrl}
                         alt="Accident Frame"
-                        className="w-full h-auto mb-4"
+                        className="w-full h-[300px] mb-4 object-contain"
                       />
                       <div className="flex items-center mb-2">
                         <AlertCircle className="mr-2 text-red-500" />
@@ -410,18 +418,6 @@ export default function AccidentDetection() {
                           <strong>Prediction:</strong>{" "}
                           {videoResult.accident_frame.prediction}
                         </span>
-                      </div>
-                      <div>
-                        <strong>Probabilities:</strong>
-                        <ul className="mt-2">
-                          {formatProbabilities(
-                            videoResult.accident_frame.probabilities
-                          ).map((prob, index) => (
-                            <li key={index} className="ml-4">
-                              {prob.label}: {prob.probability}%
-                            </li>
-                          ))}
-                        </ul>
                       </div>
                     </>
                   )}

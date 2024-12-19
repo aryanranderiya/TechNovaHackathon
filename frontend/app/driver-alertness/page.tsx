@@ -50,6 +50,7 @@ export default function DriverAlertness() {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
       setSelectedFile(file);
+      setSelectedPlaceholder(null);
       setPreviewUrl(URL.createObjectURL(file)); // Preview image
     } else {
       alert("Please select a valid image file.");
@@ -131,7 +132,7 @@ export default function DriverAlertness() {
         </Link>
         <h1 className="text-3xl font-bold mb-6">Driver Drowsiness Detection</h1>
       </div>
-      <Card>
+      <Card className="bg-zinc-100">
         <CardHeader>
           <CardTitle>Analyze Driver Drowsiness from Image</CardTitle>
         </CardHeader>
@@ -163,11 +164,12 @@ export default function DriverAlertness() {
 
             <div>
               <Label>Or select a placeholder image:</Label>
-              <div className="space-y-2 flex justify-between gap-2">
+              <div className="space-y-2 flex gap-10">
                 {[
                   "/drowsiness/drowsiness1.jpg",
                   "/drowsiness/drowsiness2.png",
                   "/drowsiness/drowsiness3.png",
+                  "/drowsiness/drowsiness4.jfif",
                 ].map((imageUrl, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <input

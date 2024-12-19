@@ -1,12 +1,12 @@
 import os
 import io
 import cv2
-import numpy as np
 from fastai.vision.all import PILImage, load_learner
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from tempfile import NamedTemporaryFile
 from fastapi.responses import StreamingResponse
+from PIL import Image
 
 router = APIRouter()
 
@@ -174,12 +174,15 @@ async def get_frame(filename: str):
         if not os.path.exists(frame_path):
             raise HTTPException(status_code=404, detail="Frame not found")
 
-        # Read the image file
-        with open(frame_path, "rb") as img_file:
-            image_bytes = img_file.read()
+        # Open the image and compress it
+        with Image.open(frame_path) as img:
+            # Compress the image (you can adjust the quality parameter)
+            img_io = io.BytesIO()
+            img.save(img_io, format="JPEG", quality=75)  # Adjust quality as needed
+            img_io.seek(0)
 
         return StreamingResponse(
-            io.BytesIO(image_bytes),
+            img_io,
             media_type="image/jpeg",
             headers={"Content-Disposition": f"attachment; filename={filename}"},
         )

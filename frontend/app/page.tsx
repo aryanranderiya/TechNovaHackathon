@@ -19,12 +19,12 @@ export default function Home() {
         "Predict future traffic patterns to help plan trips and avoid delays.",
       path: "/traffic-prediction",
     },
-    {
-      title: "Public Transportation Optimization",
-      description:
-        "Optimize bus schedules based on predicted traffic patterns.",
-      path: "/public-transport",
-    },
+    // {
+    //   title: "Public Transportation Optimization",
+    //   description:
+    //     "Optimize bus schedules based on predicted traffic patterns.",
+    //   path: "/public-transport",
+    // },
     {
       title: "Driver Safety Monitoring",
       description:
