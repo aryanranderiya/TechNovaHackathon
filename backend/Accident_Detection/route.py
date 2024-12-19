@@ -93,21 +93,8 @@ async def upload_video(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=f"Error processing video: {str(e)}")
 
 
-
-
 @router.post("/predict/video")
 async def process_video(file: UploadFile = File(...), frame_interval: int = 3):
-    """
-    Processes a video file, extracts frames, makes predictions on each frame,
-    stops if an accident is detected, and returns the accident frame details along with the image.
-
-    Args:
-        file (UploadFile): Video file uploaded by the user.
-        frame_interval (int): Interval between frames to extract and predict.
-
-    Returns:
-        JSONResponse: Details of the accident frame if detected, or all predictions if no accident is found.
-    """
     try:
         # Save the uploaded video file temporarily
         with NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
@@ -119,7 +106,9 @@ async def process_video(file: UploadFile = File(...), frame_interval: int = 3):
         os.makedirs(output_dir, exist_ok=True)
 
         # Extract frames at the specified interval
-        frame_count = extract_frames(temp_video_path, output_dir, frame_interval)
+        frame_count = extract_frames(
+            temp_video_path, output_dir, frame_interval
+        )  # Fixed: added output_dir parameter
 
         # Make predictions on each extracted frame
         for frame_file in sorted(os.listdir(output_dir)):
@@ -133,42 +122,28 @@ async def process_video(file: UploadFile = File(...), frame_interval: int = 3):
 
                 # Check if the prediction indicates an accident
                 if pred.lower() == "accident":
-                    # Read the image file and send it as a byte stream
-                    with open(frame_path, "rb") as img_file:
-                        image_bytes = img_file.read()
-
-                    # Cleanup: delete temporary video file and unprocessed frames
-                    os.remove(temp_video_path)
-                    for remaining_file in os.listdir(output_dir):
-                        os.remove(os.path.join(output_dir, remaining_file))
-                    os.rmdir(output_dir)
-
-                    # Return the accident frame details along with the image
-                    return StreamingResponse(
-                        io.BytesIO(image_bytes),
-                        media_type="image/jpeg",
-                        headers={
-                            "Content-Disposition": f"attachment; filename={frame_file}"
+                    # Return just the prediction result and filename
+                    accident_info = {
+                        "message": "Accident detected in the video.",
+                        "accident_frame": {
+                            "filename": frame_file,
+                            "prediction": pred,
+                            "probabilities": {
+                                model.dls.vocab[i]: float(probs[i])
+                                for i in range(len(probs))
+                            },
                         },
-                        background=JSONResponse(
-                            content={
-                                "message": "Accident detected in the video.",
-                                "accident_frame": {
-                                    "filename": frame_file,
-                                    "prediction": pred,
-                                    "probabilities": {
-                                        model.dls.vocab[i]: float(probs[i])
-                                        for i in range(len(probs))
-                                    },
-                                },
-                            }
-                        ).background,
-                    )
+                    }
+
+                    # Don't delete the frames yet since we need to serve the image
+                    # Just delete the temp video file
+                    os.remove(temp_video_path)
+                    return JSONResponse(content=accident_info)
 
             except Exception as e:
                 print(f"Error processing frame {frame_file}: {e}")
 
-        # Cleanup: delete temporary video file and extracted frames if no accident is found
+        # Cleanup if no accident found
         os.remove(temp_video_path)
         for remaining_file in os.listdir(output_dir):
             os.remove(os.path.join(output_dir, remaining_file))
@@ -180,5 +155,33 @@ async def process_video(file: UploadFile = File(...), frame_interval: int = 3):
                 "frame_count": frame_count,
             }
         )
+
     except Exception as e:
+        # Cleanup in case of error
+        if "temp_video_path" in locals():
+            os.remove(temp_video_path)
+        if os.path.exists(output_dir):
+            for file in os.listdir(output_dir):
+                os.remove(os.path.join(output_dir, file))
+            os.rmdir(output_dir)
         raise HTTPException(status_code=400, detail=f"Error processing video: {str(e)}")
+
+
+@router.get("/frames/{filename}")
+async def get_frame(filename: str):
+    try:
+        frame_path = os.path.join("extracted_frames", filename)
+        if not os.path.exists(frame_path):
+            raise HTTPException(status_code=404, detail="Frame not found")
+
+        # Read the image file
+        with open(frame_path, "rb") as img_file:
+            image_bytes = img_file.read()
+
+        return StreamingResponse(
+            io.BytesIO(image_bytes),
+            media_type="image/jpeg",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving frame: {str(e)}")

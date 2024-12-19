@@ -1,19 +1,33 @@
 "use client";
-
-import axios from "axios";
-import { useState, ChangeEvent } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import axios from "axios";
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronLeft,
+  Loader2,
+  Video,
+} from "lucide-react";
 import Image from "next/image";
-import { AlertCircle, CheckCircle2, ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { ChangeEvent, useState } from "react";
 
 interface DetectionResult {
   prediction: string;
   probabilities: { [key: string]: number };
+}
+
+interface VideoDetectionResult {
+  message: string;
+  accident_frame?: {
+    filename: string;
+    prediction: string;
+    probabilities: { [key: string]: number };
+  };
 }
 
 const placeholderImages: string[] = [
@@ -23,62 +37,107 @@ const placeholderImages: string[] = [
   "/accident_prediction/nonaccident1.jpg",
 ];
 
-export default function AccidentDetection() {
-  const [result, setResult] = useState<DetectionResult | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedPlaceholder, setSelectedPlaceholder] = useState<string | null>(
-    null
-  ); // This should track the image URL, not the File object
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // For image/video preview
+const placeholderVideos: string[] = [
+  "/accident_prediction/video1.mp4",
+  "/accident_prediction/video2.mp4",
+];
 
-  // Handle file change and set preview
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setResult(null);
+export default function AccidentDetection() {
+  // Image states
+  const [imageResult, setImageResult] = useState<DetectionResult | null>(null);
+  const [imageLoading, setImageLoading] = useState<boolean>(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [selectedImagePlaceholder, setSelectedImagePlaceholder] = useState<
+    string | null
+  >(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
+  // Video states
+  const [videoResult, setVideoResult] = useState<VideoDetectionResult | null>(
+    null
+  );
+  const [videoLoading, setVideoLoading] = useState<boolean>(false);
+  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
+  const [selectedVideoPlaceholder, setSelectedVideoPlaceholder] = useState<
+    string | null
+  >(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [accidentFrameUrl, setAccidentFrameUrl] = useState<string | null>(null);
+
+  // Handle image file change
+  const handleImageFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setImageResult(null);
 
     if (event.target.files?.[0]) {
       const file = event.target.files[0];
-      setSelectedFile(file);
-      setSelectedPlaceholder(null); // Reset placeholder
-      const fileUrl = URL.createObjectURL(file); // Create preview URL
-      setPreviewUrl(fileUrl);
+      setSelectedImageFile(file);
+      setSelectedImagePlaceholder(null);
+      const fileUrl = URL.createObjectURL(file);
+      setImagePreviewUrl(fileUrl);
     }
   };
 
-  // Fetch the placeholder image as a Blob and convert it to a File
-  const handlePlaceholderSelect = async (imageUrl: string) => {
-    setResult(null);
-    setSelectedPlaceholder(imageUrl); // Store image URL instead of File
-    setSelectedFile(null); // Reset selected file
+  // Handle video file change
+  const handleVideoFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setVideoResult(null);
+    setAccidentFrameUrl(null);
+
+    if (event.target.files?.[0]) {
+      const file = event.target.files[0];
+      setSelectedVideoFile(file);
+      setSelectedVideoPlaceholder(null);
+      const fileUrl = URL.createObjectURL(file);
+      setVideoPreviewUrl(fileUrl);
+    }
+  };
+
+  // Handle image placeholder selection
+  const handleImagePlaceholderSelect = async (imageUrl: string) => {
+    setImageResult(null);
+    setSelectedImagePlaceholder(imageUrl);
+    setSelectedImageFile(null);
 
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
-      const placeholderFile = new File([blob], "placeholder.png", {
-        type: blob.type,
-      });
-
-      // Create a preview URL for the placeholder image
-      const fileUrl = URL.createObjectURL(placeholderFile);
-      setPreviewUrl(fileUrl);
+      const fileUrl = URL.createObjectURL(blob);
+      setImagePreviewUrl(fileUrl);
     } catch (error) {
-      console.error("Error fetching placeholder:", error);
+      console.error("Error fetching image placeholder:", error);
     }
   };
 
-  // Handle detection request
-  const handleDetect = async () => {
-    setLoading(true);
+  // Handle video placeholder selection
+  const handleVideoPlaceholderSelect = async (videoUrl: string) => {
+    setVideoResult(null);
+    setAccidentFrameUrl(null);
+    setSelectedVideoPlaceholder(videoUrl);
+    setSelectedVideoFile(null);
+
+    try {
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const fileUrl = URL.createObjectURL(blob);
+      setVideoPreviewUrl(fileUrl);
+    } catch (error) {
+      console.error("Error fetching video placeholder:", error);
+    }
+  };
+
+  // Handle image detection
+  const handleImageDetect = async () => {
+    setImageLoading(true);
     const formData = new FormData();
-    if (selectedFile) {
-      formData.append("file", selectedFile);
-    } else if (selectedPlaceholder) {
-      const response = await fetch(selectedPlaceholder); // Use the image URL to fetch the file
+
+    if (selectedImageFile) {
+      formData.append("file", selectedImageFile);
+    } else if (selectedImagePlaceholder) {
+      const response = await fetch(selectedImagePlaceholder);
       const blob = await response.blob();
       const placeholderFile = new File([blob], "placeholder.png", {
         type: blob.type,
       });
-      formData.append("file", placeholderFile); // Add placeholder as a file
+      formData.append("file", placeholderFile);
     }
 
     try {
@@ -86,146 +145,292 @@ export default function AccidentDetection() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/accident/predict/image`,
         formData
       );
-      setResult(response.data);
+      setImageResult(response.data);
     } catch (error) {
-      console.error("Error detecting accident:", error);
+      console.error("Error detecting accident in image:", error);
     } finally {
-      setLoading(false);
+      setImageLoading(false);
     }
   };
 
-  // Format the probabilities, rounding to 2 decimal places
+  const handleVideoDetect = async () => {
+    setVideoLoading(true);
+    setVideoResult(null);
+    setAccidentFrameUrl(null);
+
+    const formData = new FormData();
+
+    if (selectedVideoFile) {
+      formData.append("file", selectedVideoFile);
+    } else if (selectedVideoPlaceholder) {
+      const response = await fetch(selectedVideoPlaceholder);
+      const blob = await response.blob();
+      const placeholderFile = new File([blob], "placeholder.mp4", {
+        type: blob.type,
+      });
+      formData.append("file", placeholderFile);
+    }
+
+    try {
+      // Get prediction results
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/accident/predict/video`,
+        formData
+      );
+
+      setVideoResult(response.data);
+
+      // If accident detected, fetch the frame image
+      if (response.data.accident_frame) {
+        const imageResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/accident/frames/${response.data.accident_frame.filename}`,
+          {
+            responseType: "blob",
+          }
+        );
+        const frameUrl = URL.createObjectURL(imageResponse.data);
+        setAccidentFrameUrl(frameUrl);
+      }
+    } catch (error) {
+      console.error("Error detecting accident in video:", error);
+      setVideoResult({
+        message: "Error processing video. Please try again.",
+        error: error.message,
+      });
+    } finally {
+      setVideoLoading(false);
+    }
+  };
+  // Format probabilities
   const formatProbabilities = (probs: { [key: string]: number }) => {
-    return Object.keys(probs).map((key) => ({
-      label: key,
-      probability: probs[key].toFixed(2), // Round to 2 decimals
+    return Object.entries(probs).map(([label, probability]) => ({
+      label,
+      probability: (probability * 100).toFixed(2),
     }));
   };
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex gap-10">
-        <Link href={"/"}>
-          <Button className="" variant={"secondary"}>
+        <Link href="/">
+          <Button variant="secondary">
             <ChevronLeft />
             Back Home
           </Button>
         </Link>
         <h1 className="text-3xl font-bold mb-6">Accident Detection</h1>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Detect Accident from Image or Video</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* File upload */}
-            <div>
-              <Label htmlFor="file-upload">Upload Image or Video</Label>
-              <Input
-                id="file-upload"
-                type="file"
-                onChange={handleFileChange}
-                accept="image/*,video/*"
-              />
-            </div>
 
-            {/* Preview the uploaded image or video */}
-            {previewUrl && (
-              <div className="mt-4">
-                {selectedFile ? (
-                  <div>
-                    <h3>Preview:</h3>
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-full h-auto"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <h3>Placeholder Preview:</h3>
-                    <Image
-                      src={previewUrl}
-                      alt="Placeholder Preview"
-                      width={300}
-                      height={200}
-                      className="w-full h-auto object-cover"
-                    />
-                  </div>
-                )}
+      <div className="flex flex-col gap-6">
+        {/* Image Detection Card */}
+        <Card>
+          <CardHeader>
+<CardTitle className="flex gap-3">
+              <Video />
+              Video Accident Detection
+            </CardTitle>
+                      </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="image-upload">Upload Image</Label>
+                <Input
+                  id="image-upload"
+                  type="file"
+                  onChange={handleImageFileChange}
+                  accept="image/*"
+                />
               </div>
-            )}
 
-            {/* Placeholder selection */}
-            <div>
-              <Label>Or select a placeholder image:</Label>
-              <RadioGroup
-                onValueChange={handlePlaceholderSelect}
-                value={selectedPlaceholder || ""}
-              >
-                <div className="flex space-x-2">
-                  {placeholderImages.map((imageUrl, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value={imageUrl}
-                        id={`placeholder-${index}`}
-                      />
-                      <Label htmlFor={`placeholder-${index}`}>
-                        <Image
-                          src={imageUrl}
-                          width={100}
-                          height={100}
-                          alt={`Placeholder ${index + 1}`}
-                          className="w-[100px] h-[100px] object-cover"
-                        />
-                      </Label>
-                    </div>
-                  ))}
+              {imagePreviewUrl && (
+                <div className="mt-4">
+                  <h3 className="font-medium mb-2">Preview:</h3>
+                  <img
+                    src={imagePreviewUrl}
+                    alt="Preview"
+                    className="w-full h-auto max-h-64 object-contain"
+                  />
                 </div>
-              </RadioGroup>
-            </div>
-
-            <Button
-              onClick={handleDetect}
-              disabled={loading || (!selectedFile && !selectedPlaceholder)}
-            >
-              {loading ? "Detecting..." : "Detect Accident"}
-            </Button>
-          </div>
-
-          {/* Display result */}
-          {result && (
-            <div className="mt-4">
-              <h2 className="text-xl font-semibold">Detection Result:</h2>
-
-              <div className="flex items-center">
-                {result.prediction === "Accident" ? (
-                  <AlertCircle className="mr-2 text-red-500" />
-                ) : (
-                  <CheckCircle2 className="mr-2 text-green-500" />
-                )}
-                <span className="text-lg font-medium">
-                  <strong>Prediction:</strong> {result.prediction}
-                </span>
-              </div>
+              )}
 
               <div>
-                <strong>Probabilities:</strong>
-                <ul>
-                  {formatProbabilities(result.probabilities).map(
-                    (prob, index) => (
-                      <li key={index}>
-                        {prob.label}: {prob.probability}%
-                      </li>
-                    )
-                  )}
-                </ul>
+                <Label>Or select a placeholder image:</Label>
+                <RadioGroup
+                  onValueChange={handleImagePlaceholderSelect}
+                  value={selectedImagePlaceholder || ""}
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    {placeholderImages.map((imageUrl, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value={imageUrl}
+                          id={`image-${index}`}
+                        />
+                        <Label htmlFor={`image-${index}`}>
+                          <Image
+                            src={imageUrl}
+                            width={100}
+                            height={100}
+                            alt={`Placeholder ${index + 1}`}
+                            className="w-[100px] h-[100px] object-cover"
+                          />
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
               </div>
+
+              <Button
+                onClick={handleImageDetect}
+                disabled={
+                  imageLoading ||
+                  (!selectedImageFile && !selectedImagePlaceholder)
+                }
+              >
+                {imageLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Detecting...
+                  </>
+                ) : (
+                  "Detect Accident"
+                )}
+              </Button>
+
+              {imageResult && (
+                <div className="mt-4 p-4 border rounded-lg">
+                  <h2 className="text-xl font-semibold mb-2">
+                    Detection Result:
+                  </h2>
+                  <div className="flex items-center mb-2">
+                    {imageResult.prediction === "Accident" ? (
+                      <AlertCircle className="mr-2 text-red-500" />
+                    ) : (
+                      <CheckCircle2 className="mr-2 text-green-500" />
+                    )}
+                    <span className="text-lg">
+                      <strong>Prediction:</strong> {imageResult.prediction}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Video Detection Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex gap-3">
+              <Video />
+              Video Accident Detection
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="video-upload">Upload Video</Label>
+                <Input
+                  id="video-upload"
+                  type="file"
+                  onChange={handleVideoFileChange}
+                  accept="video/*"
+                />
+              </div>
+
+              {videoPreviewUrl && (
+                <div className="mt-4">
+                  <h3 className="font-medium mb-2">Preview:</h3>
+                  <video
+                    src={videoPreviewUrl}
+                    controls
+                    className="w-full h-auto max-h-64"
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label>Or select a placeholder video:</Label>
+                <RadioGroup
+                  onValueChange={handleVideoPlaceholderSelect}
+                  value={selectedVideoPlaceholder || ""}
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    {placeholderVideos.map((videoUrl, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value={videoUrl}
+                          id={`video-${index}`}
+                        />
+                        <Label htmlFor={`video-${index}`}>
+                          Video {index + 1}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Button
+                onClick={handleVideoDetect}
+                disabled={
+                  videoLoading ||
+                  (!selectedVideoFile && !selectedVideoPlaceholder)
+                }
+              >
+                {videoLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing Video...
+                  </>
+                ) : (
+                  "Detect Accident"
+                )}
+              </Button>
+
+              {videoResult && (
+                <div className="mt-4 p-4 border rounded-lg">
+                  <h2 className="text-xl font-semibold mb-2">
+                    Detection Result:
+                  </h2>
+                  <p className="mb-4">{videoResult.message}</p>
+
+                  {accidentFrameUrl && videoResult.accident_frame && (
+                    <>
+                      <h3 className="font-medium mb-2">Accident Frame:</h3>
+                      <img
+                        src={accidentFrameUrl}
+                        alt="Accident Frame"
+                        className="w-full h-auto mb-4"
+                      />
+                      <div className="flex items-center mb-2">
+                        <AlertCircle className="mr-2 text-red-500" />
+                        <span className="text-lg">
+                          <strong>Prediction:</strong>{" "}
+                          {videoResult.accident_frame.prediction}
+                        </span>
+                      </div>
+                      <div>
+                        <strong>Probabilities:</strong>
+                        <ul className="mt-2">
+                          {formatProbabilities(
+                            videoResult.accident_frame.probabilities
+                          ).map((prob, index) => (
+                            <li key={index} className="ml-4">
+                              {prob.label}: {prob.probability}%
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
