@@ -119,11 +119,11 @@ async def predict(
         # Extract predicted value
         predicted_value = prediction.item()
 
-        # Unnormalize the predicted value
-        data_min = 0
-        data_max = 23
+        # # Unnormalize the predicted value
+        # data_min = 0
+        # data_max = 23
 
-        predicted_value = predicted_value * (data_max - data_min) + data_min
+        # predicted_value = predicted_value * (data_max - data_min) + data_min
 
         return JSONResponse(
             content={
