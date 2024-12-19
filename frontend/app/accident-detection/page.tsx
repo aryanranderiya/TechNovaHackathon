@@ -23,9 +23,9 @@ export default function AccidentDetection() {
   const [result, setResult] = useState<DetectionResult | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedPlaceholder, setSelectedPlaceholder] = useState<File | null>(
+  const [selectedPlaceholder, setSelectedPlaceholder] = useState<string | null>(
     null
-  );
+  ); // This should track the image URL, not the File object
   const [previewUrl, setPreviewUrl] = useState<string | null>(null); // For image/video preview
 
   // Handle file change and set preview
@@ -33,7 +33,7 @@ export default function AccidentDetection() {
     if (event.target.files?.[0]) {
       const file = event.target.files[0];
       setSelectedFile(file);
-      setSelectedPlaceholder(null);
+      setSelectedPlaceholder(null); // Reset placeholder
       const fileUrl = URL.createObjectURL(file); // Create preview URL
       setPreviewUrl(fileUrl);
     }
@@ -41,8 +41,8 @@ export default function AccidentDetection() {
 
   // Fetch the placeholder image as a Blob and convert it to a File
   const handlePlaceholderSelect = async (imageUrl: string) => {
-    setSelectedPlaceholder(null); // Reset placeholder
-    setSelectedFile(null); // Reset the selected file
+    setSelectedPlaceholder(imageUrl); // Store image URL instead of File
+    setSelectedFile(null); // Reset selected file
 
     try {
       const response = await fetch(imageUrl);
@@ -51,8 +51,8 @@ export default function AccidentDetection() {
         type: blob.type,
       });
 
-      setSelectedPlaceholder(placeholderFile);
-      const fileUrl = URL.createObjectURL(placeholderFile); // Create a preview URL for the placeholder image
+      // Create a preview URL for the placeholder image
+      const fileUrl = URL.createObjectURL(placeholderFile);
       setPreviewUrl(fileUrl);
     } catch (error) {
       console.error("Error fetching placeholder:", error);
@@ -66,7 +66,12 @@ export default function AccidentDetection() {
     if (selectedFile) {
       formData.append("file", selectedFile);
     } else if (selectedPlaceholder) {
-      formData.append("file", selectedPlaceholder); // Add placeholder as a file
+      const response = await fetch(selectedPlaceholder); // Use the image URL to fetch the file
+      const blob = await response.blob();
+      const placeholderFile = new File([blob], "placeholder.png", {
+        type: blob.type,
+      });
+      formData.append("file", placeholderFile); // Add placeholder as a file
     }
 
     try {
@@ -142,7 +147,7 @@ export default function AccidentDetection() {
               <Label>Or select a placeholder image:</Label>
               <RadioGroup
                 onValueChange={handlePlaceholderSelect}
-                value={selectedPlaceholder?.name || ""}
+                value={selectedPlaceholder || ""}
               >
                 <div className="flex space-x-2">
                   {placeholderImages.map((imageUrl, index) => (

@@ -2,11 +2,12 @@ from fastapi import FastAPI
 
 # from Accident_Detection.route import router as accident_detection_router
 from Traffic_Prediction.route import router as traffic_prediction_router
+from Accident_Detection.route import router as accident_detection_router
 
 app = FastAPI()
 
-# app.include_router(accident_detection_router, prefix="/api/accident", tags=["items"])
-app.include_router(traffic_prediction_router, prefix="/api/traffic", tags=["items"])
+app.include_router(traffic_prediction_router, prefix="/api/traffic", tags=["Traffic"])
+app.include_router(accident_detection_router, prefix="/api/accident", tags=["Accident"])
 
 if __name__ == "__main__":
     import uvicorn
