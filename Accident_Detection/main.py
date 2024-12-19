@@ -1,24 +1,41 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile
-from fastapi.responses import JSONResponse
-from fastai.vision.all import load_learner, PILImage
 import io
+
+from fastai.vision.all import PILImage, load_learner
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-model = load_learner("model.pkl")
+accident_model = load_learner("model.pkl")
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "https://vigilant-broccoli-g64rw5j9v47fp94w-3000.app.github.dev",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-@app.post("/predict/")
+@app.post("/predict/accident")
 async def predict(file: UploadFile = File(...)):
     try:
         image_data = await file.read()
         image = PILImage.create(io.BytesIO(image_data))
-        pred, pred_idx, probs = model.predict(image)
+        pred, pred_idx, probs = accident_model.predict(image)
         return JSONResponse(
             content={
                 "prediction": pred,
                 "probabilities": {
-                    model.dls.vocab[i]: float(probs[i]) for i in range(len(probs))
+                    accident_model.dls.vocab[i]: float(probs[i])
+                    for i in range(len(probs))
                 },
             }
         )
@@ -29,4 +46,4 @@ async def predict(file: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
