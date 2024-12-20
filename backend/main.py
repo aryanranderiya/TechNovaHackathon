@@ -23,6 +23,15 @@ app.include_router(accident_router, prefix="/api/accident", tags=["Accident Dete
 app.include_router(driver_router, prefix="/api/drowsiness", tags=["Driver Drowsiness"])
 app.include_router(RAG, prefix="/api/RAG", tags=["LLM"])
 
+
+@app.get("/")
+async def get_root():
+    """
+    A simple endpoint to check the status of the traffic prediction service.
+    """
+    return {"status": "Service is running!"}
+
+
 if __name__ == "__main__":
     import uvicorn
 
