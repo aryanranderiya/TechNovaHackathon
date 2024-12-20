@@ -193,7 +193,6 @@ export default function AccidentDetection() {
       console.error("Error detecting accident in video:", error);
       setVideoResult({
         message: "Error processing video. Please try again.",
-        error: error.message,
       });
     } finally {
       setVideoLoading(false);
@@ -243,7 +242,9 @@ export default function AccidentDetection() {
               {imagePreviewUrl && (
                 <div className="mt-4">
                   <h3 className="font-medium mb-2">Preview:</h3>
-                  <img
+                  <Image
+                    width={256}
+                    height={256}
                     src={imagePreviewUrl}
                     alt="Preview"
                     className="w-full h-auto max-h-64 object-contain"
@@ -407,7 +408,9 @@ export default function AccidentDetection() {
                   {accidentFrameUrl && videoResult.accident_frame && (
                     <>
                       <h3 className="font-medium mb-2">Accident Frame:</h3>
-                      <img
+                      <Image
+                        width={500}
+                        height={300}
                         src={accidentFrameUrl}
                         alt="Accident Frame"
                         className="w-full h-[300px] mb-4 object-contain"

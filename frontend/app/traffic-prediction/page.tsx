@@ -36,7 +36,7 @@ interface PredictionData {
   prediction: number;
 }
 
-export const stations: number[] = [
+const stations: number[] = [
   86090, 116210, 116610, 116770, 116820, 116830, 116840, 116850, 118240, 118250,
   118260, 119030, 119100, 119120, 119740, 119780,
 ];

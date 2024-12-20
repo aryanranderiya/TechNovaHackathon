@@ -10,7 +10,11 @@ import {
 } from "@/components/ui/select";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
-import { stations } from "../traffic-prediction/page";
+
+const stations: number[] = [
+  86090, 116210, 116610, 116770, 116820, 116830, 116840, 116850, 118240, 118250,
+  118260, 119030, 119100, 119120, 119740, 119780,
+];
 
 interface Message {
   id: string;
