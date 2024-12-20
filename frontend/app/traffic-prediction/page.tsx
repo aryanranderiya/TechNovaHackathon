@@ -141,6 +141,8 @@ export default function TrafficPrediction() {
                 type="date"
                 value={date}
                 onChange={handleDateChange}
+                min="2015-01-01" // Minimum date: January 1, 2015
+                max="2015-12-31" // Maximum date: December 31, 2015
                 placeholder="Select date"
               />
             </div>

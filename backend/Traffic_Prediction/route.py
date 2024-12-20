@@ -142,7 +142,7 @@ async def predict(
             content={
                 "station_id": station_id,
                 "datetime": datetime,
-                "prediction": floor(predicted_value),
+                "prediction": floor(predicted_value / 10),
             }
         )
 

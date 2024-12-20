@@ -66,33 +66,6 @@ async def predict_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=f"Error in prediction: {str(e)}")
 
 
-@router.post("/upload/video")
-async def upload_video(file: UploadFile = File(...)):
-    try:
-        # Save the uploaded file temporarily
-        with NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
-            temp_video.write(await file.read())
-            temp_video_path = temp_video.name
-
-        # Directory to save extracted frames
-        output_dir = "extracted_frames"
-
-        # Extract frames
-        frame_count = extract_frames(temp_video_path, output_dir)
-
-        # Cleanup temporary file
-        os.remove(temp_video_path)
-
-        return JSONResponse(
-            content={
-                "message": f"Video processed successfully. {frame_count} frames extracted.",
-                "output_directory": output_dir,
-            }
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error processing video: {str(e)}")
-
-
 @router.post("/predict/video")
 async def process_video(file: UploadFile = File(...), frame_interval: int = 3):
     try:
