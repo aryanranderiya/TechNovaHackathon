@@ -1,0 +1,23 @@
+{
+  "min": [
+    0.0, 0.0, -1.0, -0.4, 0.0, -2015.0, -0.09090909090909091,
+    -0.03333333333333333, 0.0, 0.0, 0.0
+  ],
+  "scale": [
+    0.043478260869565216, 1.0, 1.0, 0.2, 4.4273254526940277e-5, 1.0,
+    0.09090909090909091, 0.03333333333333333, 1.0, 1.0, 1.0
+  ],
+  "feature_names": [
+    "hour",
+    "is_weekend",
+    "national_highway_system",
+    "number_of_lanes_monitored_for_traffic_volume",
+    "traffic_volume",
+    "year",
+    "month",
+    "day",
+    "functional_classification_1R",
+    "functional_classification_1U",
+    "functional_classification_2U"
+  ]
+}
